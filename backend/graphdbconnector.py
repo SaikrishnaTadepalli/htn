@@ -1,4 +1,5 @@
 from neo4j import GraphDatabase, RoutingControl
+from math import ceil
 
 uri = "neo4j+s://dcbd9a72.databases.neo4j.io:7687"
 driver = GraphDatabase.driver(uri, auth=("neo4j", "7xMq5ln--6oseUM0ErqfKMfLI3ijDaA3k46e_R0P0w0"))
@@ -54,6 +55,24 @@ class GraphDBConnector:
                 return user_node
         except Exception as e:
             print(f"Failed to add User:\n\n{e}\n")
+    
+    def is_user(email):
+        try:
+            query = """
+            MATCH (u:User {email: $email})
+            RETURN u
+            """
+            with driver.session() as session:
+                result = session.run(query, email=email)
+                result = result.single()
+            
+            if result: 
+                return True
+            
+            return False
+        except Exception as e:
+            print(f"Failed query")
+            return False
 
     def add_sport(sport_name):
         try:
@@ -122,6 +141,7 @@ class GraphDBConnector:
                 return connections
         except Exception as e:
             print(f"Failed to connect user to sport\n\n{e}\n")
+            return []
 
     def find_sport_connections(email):
         try:
@@ -139,6 +159,7 @@ class GraphDBConnector:
                 return res
         except Exception as e:
             print(f"Failed to get connections for Users based on sports:\n\n{e}\n")
+            return []
 
     def find_movie_genre_connections(email):
         try:
@@ -156,6 +177,7 @@ class GraphDBConnector:
                 return res
         except Exception as e:
             print(f"Failed to get connections for Movie Genres based on sports:\n\n{e}\n")
+            return []
 
     def find_global_connections(email):
         scores = {}
@@ -172,6 +194,12 @@ class GraphDBConnector:
         res.sort(key=lambda x: x[1], reverse=True)
 
         return [ otherEmail for otherEmail, score in res ]
+    
+    def find_date(email):
+        global_connections = GraphDBConnector.find_global_connections(email)
+        if not(global_connections): 
+            return ""
+        return global_connections[int(ceil(len(global_connections) / 2) - 1)]
 
 
 david = ("david@htn.ca", "BC", "gang")
@@ -236,6 +264,9 @@ movie_genres = [ "Action", "Drama", "Horror", "Fantasy", "Romance", "Adventure" 
 print(GraphDBConnector.find_sport_connections(david[0]))
 print(GraphDBConnector.find_movie_genre_connections(david[0]))
 print(GraphDBConnector.find_global_connections(david[0]))
+
+print(GraphDBConnector.add_user("usr39", "fn", "ln"))
+print(GraphDBConnector.add_user("usr39", "fn", "ln"))
 
 # Lucas
 
